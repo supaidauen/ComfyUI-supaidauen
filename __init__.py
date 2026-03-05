@@ -302,7 +302,12 @@ class supaidauen_Image_Compositor:
       r = self.composite(r,pairs[i])
     image,mask = r[0],r[1]
     composite_pipe = (image1,mask1,image2,mask2,image3,mask3,image4,mask4)
-    return(image,mask,mask1,mask2,mask3,mask4,composite_pipe)
+    return(image,mask,
+          image1, mask1,
+          image2, mask2,
+          image3, mask3,
+          image4, mask4,
+          composite_pipe)
 
 class supaidauen_LoadImageFromPath_input:
   @classmethod
