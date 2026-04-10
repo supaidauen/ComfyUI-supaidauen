@@ -20,6 +20,7 @@ Image.MAX_IMAGE_PIXELS = None
 from .modules.passthroughs import *
 from .modules.legacy import *
 from .modules.text import *
+from .modules.impact_overrides import *
 
 MAX_RESOLUTION = nodes.MAX_RESOLUTION
 
@@ -566,6 +567,7 @@ NODE_CLASS_MAPPINGS = {
   "Supaidauen_Passthrough_CLIP": supaidauen_passthrough_CLIP,
   "Supaidauen_Passthrough_MASK": supaidauen_passthrough_MASK,
   "Supaidauen_Passthrough_STRING": supaidauen_passthrough_STRING,
+  "Supaidauen_ImpactEndAtStepModelControl": EndAtStepsModelControl,
 }
 
 
@@ -597,4 +599,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
   "Supaidauen_Passthrough_CLIP": "Passthrough CLIP",
   "Supaidauen_Passthrough_MASK": "Passthrough MASK",
   "Supaidauen_Passthrough_STRING": "Passthrough STRING",
+  "Supaidauen_ImpactEndAtStepModelControl": " Detailer For Each Pipe (End At Step)",
 }

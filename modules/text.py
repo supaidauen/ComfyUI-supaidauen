@@ -1,5 +1,6 @@
 import re
 from datetime import datetime as dt
+import itertools
 
 class supaidauen_PromptConsolidator:
   @ classmethod
