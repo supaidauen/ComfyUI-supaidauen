@@ -175,8 +175,18 @@ class supaidauen_Image_Compositor:
       }
     }
   #
-  RETURN_TYPES = ("IMAGE", "MASK","MASK","MASK","MASK","MASK","COMPOSITE_PIPE")
-  RETURN_NAMES = ('image','mask','mask1','mask2','mask3','mask4','composite_pipe')
+  RETURN_TYPES = ("IMAGE", "MASK"
+                  , "IMAGE", "MASK"
+                  , "IMAGE", "MASK"
+                  , "IMAGE", "MASK"
+                  , "IMAGE", "MASK"
+                  ,"COMPOSITE_PIPE")
+  RETURN_NAMES = ('image','mask'
+                  ,'image1','mask1'
+                  ,'image2','mask2'
+                  ,'image3','mask3'
+                  ,'image4','mask4'
+                  ,'composite_pipe')
   FUNCTION = "doit"
   CATEGORY = "supaidauen/Util"
   #
@@ -280,12 +290,11 @@ class supaidauen_Image_Compositor:
               image4, mask4
           )
           return (
-              image,
-              mask,
-              mask1,
-              mask2,
-              mask3,
-              mask4,
+              image, mask,
+              image1, mask1,
+              image2, mask2,
+              image3, mask3,
+              image4, mask4,
               composite_pipe
           )
       if 'r' not in locals():
@@ -293,7 +302,12 @@ class supaidauen_Image_Compositor:
       r = self.composite(r,pairs[i])
     image,mask = r[0],r[1]
     composite_pipe = (image1,mask1,image2,mask2,image3,mask3,image4,mask4)
-    return(image,mask,mask1,mask2,mask3,mask4,composite_pipe)
+    return(image,mask,
+          image1, mask1,
+          image2, mask2,
+          image3, mask3,
+          image4, mask4,
+          composite_pipe)
 
 class supaidauen_LoadImageFromPath_input:
   @classmethod
