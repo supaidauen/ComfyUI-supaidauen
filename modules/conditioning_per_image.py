@@ -1,62 +1,81 @@
-class supaidauen_Conditioning_per_Image:
+import re
+
+class supaidauen_StructuredBatchConditioning:
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
                 "images": ("IMAGE",),
-                "prompts": ("STRING", {"multiline": True}),
+                "text": ("STRING", {
+                    "multiline": True,
+                    "placeholder": "prompt: ...\n---\nprompt: ..."
+                }),
+                "negative": ("STRING", {
+                    "multiline": True,
+                    "default": "",
+                }),
                 "clip": ("CLIP",),
-                "index": ("INT", {"default": 0, "min": 0}),
             }
         }
 
-    RETURN_TYPES = ("IMAGE", "CONDITIONING")
-    RETURN_NAMES = ("image", "conditioning")
-    FUNCTION = "get_conditioning"
-    CATEGORY = "utils/pairing"
+    RETURN_TYPES = ("IMAGE", "CONDITIONING", "CONDITIONING")
+    RETURN_NAMES = ("images", "positive_batch", "negative_batch")
+    FUNCTION = "process"
+    CATEGORY = "utils/structured"
 
-    def parse_prompts(self, prompts):
-        # Already a list? Return as-is
-        if isinstance(prompts, list):
-            return prompts
+    # --- parsing ---
+    def split_blocks(self, text):
+        text = text.replace("\r\n", "\n")
+        return re.split(r"\n\s*-{3,}\s*\n", text)
 
-        # Normalize line endings
-        text = prompts.replace("\r\n", "\n")
+    def parse_block(self, block):
+        data = {}
+        for line in block.strip().split("\n"):
+            if ":" not in line:
+                continue
+            k, v = line.split(":", 1)
+            data[k.strip().lower()] = v.strip()
+        return data
 
-        # Split on lines that are ONLY hashes (e.g. ###, ####, etc.)
-        import re
-        raw_blocks = re.split(r"\n#{3,}\n", text)
+    def parse_all(self, text):
+        return [
+            self.parse_block(b)
+            for b in self.split_blocks(text)
+            if b.strip()
+        ]
 
-        # Clean each block
-        parsed = []
-        for block in raw_blocks:
-            cleaned = block.strip()
-            if cleaned:
-                parsed.append(cleaned)
+    # --- CLIP encode ---
+    def encode(self, clip, text):
+        if not text:
+            text = ""
 
-        return parsed
+        tokens = clip.tokenize(text)
+        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+        return [[cond, {"pooled_output": pooled}]]
 
-    def get_conditioning(self, images, prompts, clip, index):
-        # Normalize inputs
+    # --- main ---
+    def process(self, images, text, negative, clip):
         if not isinstance(images, list):
             images = [images]
 
-        prompts = self.parse_prompts(prompts)
+        entries = self.parse_all(text)
 
-        if len(images) != len(prompts):
+        if len(images) != len(entries):
             raise ValueError(
-                f"Length mismatch: {len(images)} images vs {len(prompts)} prompts"
+                f"Mismatch: {len(images)} images vs {len(entries)} prompt blocks"
             )
 
-        if index >= len(images):
-            raise IndexError(f"Index {index} out of range")
+        # Encode GLOBAL negative ONCE
+        neg_cond = self.encode(clip, negative)
 
-        image = images[index]
-        prompt = prompts[index]
+        positive_batch = []
+        negative_batch = []
 
-        tokens = clip.tokenize(prompt)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
+        for entry in entries:
+            prompt = entry.get("prompt", "")
+            pos_cond = self.encode(clip, prompt)
 
-        conditioning = [[cond, {"pooled_output": pooled}]]
+            positive_batch.append(pos_cond)
+            negative_batch.append(neg_cond)
 
-        return (image, conditioning)
+        return (images, positive_batch, negative_batch)
