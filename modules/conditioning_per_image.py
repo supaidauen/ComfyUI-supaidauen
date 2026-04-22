@@ -1,6 +1,6 @@
 import re
 
-class supaidauen_StructuredBatchConditioning:
+class supaidauen_StructuredBatchConditioningGlobalNegative:
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -26,7 +26,7 @@ class supaidauen_StructuredBatchConditioning:
     # --- parsing ---
     def split_blocks(self, text):
         text = text.replace("\r\n", "\n")
-        return re.split(r"\n\s*-{3,}\s*\n", text)
+        return re.split(r"\n\s*---{3,}\s*\n", text)
 
     def parse_block(self, block):
         data = {}
@@ -55,6 +55,9 @@ class supaidauen_StructuredBatchConditioning:
 
     # --- main ---
     def process(self, images, text, negative, clip):
+        if not isinstance(images, list):
+            images = [images]
+
         entries = self.parse_all(text)
 
         if len(images) != len(entries):

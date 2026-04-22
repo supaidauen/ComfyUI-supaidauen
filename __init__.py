@@ -583,7 +583,7 @@ NODE_CLASS_MAPPINGS = {
   "Supaidauen_Passthrough_MASK": supaidauen_passthrough_MASK,
   "Supaidauen_Passthrough_STRING": supaidauen_passthrough_STRING,
   "Supaidauen_ImpactEndAtStepModelControl": EndAtStepsModelControl,
-  "Supaidauen_Conditioning_per_Image": supaidauen_StructuredBatchConditioning,
+  "Supaidauen_Conditioning_per_Image": supaidauen_StructuredBatchConditioningGlobalNegative,
 }
 
 
