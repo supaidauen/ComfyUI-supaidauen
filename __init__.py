@@ -583,7 +583,7 @@ NODE_CLASS_MAPPINGS = {
   "Supaidauen_Passthrough_MASK": supaidauen_passthrough_MASK,
   "Supaidauen_Passthrough_STRING": supaidauen_passthrough_STRING,
   "Supaidauen_ImpactEndAtStepModelControl": EndAtStepsModelControl,
-  "Supaidauen_Conditioning_per_Image": supaidauen_StructuredBatchConditioningGlobalNegative,
+  "Supaidauen_ZippedPromptFromTextAdvanced": supaidauen_ZippedPromptFromTextAdvanced,
 }
 
 
@@ -616,5 +616,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
   "Supaidauen_Passthrough_MASK": "Passthrough MASK",
   "Supaidauen_Passthrough_STRING": "Passthrough STRING",
   "Supaidauen_ImpactEndAtStepModelControl": "Detailer For Each Pipe (End At Step)",
-  "Supaidauen_Conditioning_per_Image": "Conditioning Per Image",
+  "Supaidauen_ZippedPromptFromTextAdvanced": "Zipped prompt from string",
 }

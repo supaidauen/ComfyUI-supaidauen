@@ -1,81 +1,88 @@
 import re
 
-class supaidauen_StructuredBatchConditioningGlobalNegative:
+class supaidaeun_ZippedPromptFromTextAdvanced:
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "images": ("IMAGE",),
                 "text": ("STRING", {
                     "multiline": True,
-                    "placeholder": "prompt: ...\n---\nprompt: ..."
+                    "placeholder": (
+                        "global_negative:\nblurry\nlow quality\n---\n"
+                        "name: example\npositive:\na cat\n---\n"
+                        "name: example2\npositive:\na dog\nnegative:\nfog"
+                    )
                 }),
-                "negative": ("STRING", {
-                    "multiline": True,
-                    "default": "",
-                }),
-                "clip": ("CLIP",),
             }
         }
 
-    RETURN_TYPES = ("IMAGE", "CONDITIONING", "CONDITIONING")
-    RETURN_NAMES = ("images", "positive_batch", "negative_batch")
-    FUNCTION = "process"
-    CATEGORY = "utils/structured"
+    RETURN_TYPES = ("ZIPPED_PROMPT",)
+    OUTPUT_IS_LIST = (True,)
+    FUNCTION = "parse"
+    CATEGORY = "utils/prompt"
 
-    # --- parsing ---
+    # --- helpers ---
+
     def split_blocks(self, text):
-        text = text.replace("\r\n", "\n")
-        return re.split(r"\n\s*---{3,}\s*\n", text)
+        return re.split(r"\n\s*-{3,}\s*\n", text.replace("\r\n", "\n"))
 
-    def parse_block(self, block):
-        data = {}
-        for line in block.strip().split("\n"):
-            if ":" not in line:
+    def extract_block(self, text, key):
+        """
+        Extract multiline block:
+        key:
+        line1
+        line2
+        until next key or end
+        """
+        pattern = rf"{key}:\s*\n(.*?)(?=\n\w+:|\Z)"
+        match = re.search(pattern, text, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        return None
+
+    def extract_inline(self, text, key):
+        pattern = rf"{key}:\s*(.*)"
+        match = re.search(pattern, text)
+        if match:
+            return match.group(1).strip()
+        return None
+
+    # --- main parser ---
+
+    def parse(self, text):
+
+        blocks = self.split_blocks(text)
+
+        global_negative = ""
+        prompts = []
+
+        for i, block in enumerate(blocks):
+            block = block.strip()
+            if not block:
                 continue
-            k, v = line.split(":", 1)
-            data[k.strip().lower()] = v.strip()
-        return data
 
-    def parse_all(self, text):
-        return [
-            self.parse_block(b)
-            for b in self.split_blocks(text)
-            if b.strip()
-        ]
+            # detect global block
+            if block.lower().startswith("global_negative"):
+                gn = self.extract_block(block, "global_negative")
+                if gn:
+                    global_negative = gn
+                continue
 
-    # --- CLIP encode ---
-    def encode(self, clip, text):
-        if not text:
-            text = ""
+            # extract fields
+            name = self.extract_inline(block, "name") or f"prompt_{len(prompts)}"
 
-        tokens = clip.tokenize(text)
-        cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-        return [[cond, {"pooled_output": pooled}]]
+            positive = self.extract_block(block, "positive")
+            if not positive:
+                positive = self.extract_inline(block, "positive") or ""
 
-    # --- main ---
-    def process(self, images, text, negative, clip):
-        if not isinstance(images, list):
-            images = [images]
+            negative = self.extract_block(block, "negative")
+            if not negative:
+                negative = self.extract_inline(block, "negative")
 
-        entries = self.parse_all(text)
+            # fallback to global negative
+            if not negative:
+                negative = global_negative
 
-        if len(images) != len(entries):
-            raise ValueError(
-                f"Mismatch: {len(images)} images vs {len(entries)} prompt blocks"
-            )
+            prompts.append((positive, negative, name))
 
-        # Encode GLOBAL negative ONCE
-        neg_cond = self.encode(clip, negative)
-
-        positive_batch = []
-        negative_batch = []
-
-        for entry in entries:
-            prompt = entry.get("prompt", "")
-            pos_cond = self.encode(clip, prompt)
-
-            positive_batch.append(pos_cond)
-            negative_batch.append(neg_cond)
-
-        return (images, positive_batch, negative_batch)
+        return (prompts,)
