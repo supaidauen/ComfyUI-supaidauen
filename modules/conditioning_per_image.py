@@ -55,9 +55,6 @@ class supaidauen_StructuredBatchConditioning:
 
     # --- main ---
     def process(self, images, text, negative, clip):
-        if not isinstance(images, list):
-            images = [images]
-
         entries = self.parse_all(text)
 
         if len(images) != len(entries):
