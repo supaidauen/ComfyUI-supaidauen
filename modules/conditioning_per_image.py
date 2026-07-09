@@ -1,6 +1,6 @@
 import re
 
-class supaidaeun_ZippedPromptFromTextAdvanced:
+class supaidauen_ZippedPromptFromTextAdvanced:
     @classmethod
     def INPUT_TYPES(cls):
         return {

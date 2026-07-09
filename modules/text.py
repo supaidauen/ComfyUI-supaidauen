@@ -189,7 +189,7 @@ class supaidauen_TextConcatenateFileName:
     pose = pose.split("\\")[-1].split(".")[0]
     return (f"{moniker}{separator}{padded_seed}{separator}{PNY}{separator}{sd15}{separator}{sdXL}{separator}{pose}", )
 
-class supaidauen_RunIDConcatenate :
+class supaidauen_RunIDConcatenate:
   @ classmethod
   def INPUT_TYPES(cls):
     return {
@@ -215,3 +215,44 @@ class supaidauen_RunIDConcatenate :
     runid = dt.today().strftime('%Y%m%d%H%M%S')
     string = string+separator+runid
     return (string, )
+
+class supaidauen_KREA_Masker:
+  @ classmethod
+  def INPUT_TYPES(cls):
+    return {
+      "required": {
+        "value01": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value02": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value03": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value04": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value05": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value06": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value07": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value08": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value09": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value10": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value11": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "value12": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+        "multiplier": ("FLOAT", {"default": 1.0, "min": -10000.0, "max": 10000.0, "step": 0.05 }),
+      },
+      "optional": {},
+    }
+  RETURN_TYPES = ("STRING","FLOAT", )
+  RETURN_NAMES = ("rebalance","multiplier", )
+  FUNCTION = "doit"
+  CATEGORY = "supaidauen/Util"
+  def doit(self, value01,
+            value02,
+            value03,
+            value04,
+            value05,
+            value06,
+            value07,
+            value08,
+            value09,
+            value10,
+            value11,
+            value12,
+            multiplier,):
+    rebalance = f"{value01},{value02},{value03},{value04},{value05},{value06},{value07},{value08},{value09},{value10},{value11},{value12}"
+    return (rebalance,multiplier )
