@@ -421,17 +421,18 @@ class supaidauen_Character_IO:
       "optional":{
         "width": ("INT", {"default": 1024, "min": -8096, "max": MAX_RESOLUTION}),
         "height": ("INT", {"default": 1024, "min": -8096, "max": MAX_RESOLUTION}),
-        "rescale": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 2.0, "step":0.25, "round": 0.01}),
+        "rescale": ("FLOAT", {"default": 1.0, "min": 0.01, "max": 8.0, "step":0.25, "round": 0.001}),
         "crop_to_size": ("BOOLEAN", {"default": False,"label_on": "resize","label_off": "default"}),
+        "target_key": ("STRING", {"default": "prompt"}),
       }
     }
   #
-  RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT")
-  RETURN_NAMES = ("image", "mask", "width", "height")
+  RETURN_TYPES = ("IMAGE", "MASK", "INT", "INT","STRING","STRING")
+  RETURN_NAMES = ("image", "mask", "width", "height","keys","prompt")
   FUNCTION = "load_image"
   CATEGORY = "supaidauen/Util"
   #
-  def load_image(self, name, path, suffix, wildcard, seed, width, height, rescale, crop_to_size,):
+  def load_image(self, name, path, suffix, wildcard, seed, width, height, rescale, crop_to_size,target_key):
     image = self._get_filename(name, path, suffix, wildcard)
     #
     if not self._resolve_path(image):
@@ -440,32 +441,40 @@ class supaidauen_Character_IO:
       image = image[0]
     image_path = folder_paths.get_annotated_filepath(image)
     #
-    i = Image.open(image_path)
-    i = ImageOps.exif_transpose(i)
-    if crop_to_size:
-      default_width = i.size[0]
-      default_height = i.size[1]
-      diff_width = default_width - width
-      diff_height = default_height - height
-      left = diff_width/2
-      upper = diff_height/2
-      right = width+left
-      lower = height+upper
-      new_size = (left, upper, right, lower)
-      print(new_size)
-      i = i.crop(new_size)
-      i = i.resize([round(size*rescale) for size in i.size])
-    img_width = i.size[0]
-    img_height = i.size[1]
-    image = i.convert("RGB")
-    image = np.array(image).astype(np.float32) / 255.0
-    image = torch.from_numpy(image)[None,]
-    if 'A' in i.getbands():
-      mask = np.array(i.getchannel('A')).astype(np.float32) / 255.0
-      mask = 1. - torch.from_numpy(mask)
-    else:
-      mask = torch.zeros((64,64), dtype=torch.float32, device="cpu")
-    return (image, mask, img_width, img_height)
+    with Image.open(image_path) as i:
+      info_dict = i.info
+      keys_list = list(info_dict.keys())
+      keys_string = ", ".join(keys_list) if keys_list else "No metadata keys found."
+      if not target_key:
+        target_value = ''
+      else:
+        target_value = str(info_dict.get(target_key, f"Key '{target_key}' not found."))
+      i = ImageOps.exif_transpose(i)
+
+      if crop_to_size:
+        default_width = i.size[0]
+        default_height = i.size[1]
+        diff_width = default_width - width
+        diff_height = default_height - height
+        left = diff_width/2
+        upper = diff_height/2
+        right = width+left
+        lower = height+upper
+        new_size = (left, upper, right, lower)
+        print(new_size)
+        i = i.crop(new_size)
+        i = i.resize([round(size*rescale) for size in i.size])
+      img_width = i.size[0]
+      img_height = i.size[1]
+      image = i.convert("RGB")
+      image = np.array(image).astype(np.float32) / 255.0
+      image = torch.from_numpy(image)[None,]
+      if 'A' in i.getbands():
+        mask = np.array(i.getchannel('A')).astype(np.float32) / 255.0
+        mask = 1. - torch.from_numpy(mask)
+      else:
+        mask = torch.zeros((64,64), dtype=torch.float32, device="cpu")
+    return (image, mask, img_width, img_height,keys_string,target_value)
   #
   @staticmethod
   def _get_filename(name, path, suffix, wildcard):
@@ -476,7 +485,6 @@ class supaidauen_Character_IO:
   def _resolve_path(image) -> Path:
       image_path = Path(folder_paths.get_annotated_filepath(image))
       return image_path
-  #
 
 class supaidauen_ImagePadding:
   @classmethod

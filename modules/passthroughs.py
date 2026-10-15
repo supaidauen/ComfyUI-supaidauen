@@ -31,7 +31,11 @@ class supaidauen_passthrough_IMAGE:
   def INPUT_TYPES(s):
     return {
       "required": {
-      "image": ('IMAGE',)}
+      "image": ('IMAGE',)
+      },
+      "optional":{
+      "prompt": ('STRING')
+      }
     }
   #
   @classmethod
@@ -42,12 +46,12 @@ class supaidauen_passthrough_IMAGE:
   def VALIDATE_INPUTS(s, **kwargs):
     return True
   #
-  RETURN_TYPES = ("IMAGE", )
+  RETURN_TYPES = ("IMAGE", "STRING" )
   FUNCTION = "doit"
   CATEGORY = "supaidauen/Util"
   #
-  def doit(self, image):
-    return(image,)
+  def doit(self, image, prompt):
+    return(image, prompt)
 
 class supaidauen_passthrough_LATENT:
   def __init__(self):
