@@ -31,9 +31,8 @@ def resolve_output_subpath(sub_path: str) -> str:
     
     # 2. Normalize the user input to strip out dangerous leading slashes or explicit relative steps
     # os.path.normpath resolves things like 'a/../b' to just 'b'
-    clean_sub_path = os.path.normpath(sub_path).lstrip(os.sep).lstrip(".")
-    clean_sub_path = clean_sub_path.replace("output/",'')
-    
+    clean_sub_path = sub_path.replace("/output",'')
+    clean_sub_path = os.path.normpath(clean_sub_path).lstrip(".").lstrip(os.sep)
     # 3. Securely bind it to the output directory footprint
     absolute_target_path = os.path.abspath(os.path.join(output_dir, clean_sub_path))
     
