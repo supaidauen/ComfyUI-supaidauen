@@ -322,7 +322,7 @@ class supaidauen_Character_IO:
       if not target_key:
         target_value = ''
       else:
-        target_value = str(info_dict.get(target_key, f"Key '{target_key}' not found."))
+        target_value = str(info_dict.get(target_key, f"Key '{target_key}' not found.")).strip("'\"")
       i = ImageOps.exif_transpose(i)
 
       if crop_to_size:
@@ -359,7 +359,6 @@ class supaidauen_Character_IO:
   def _resolve_path(image) -> Path:
       image_path = Path(folder_paths.get_annotated_filepath(image))
       return image_path
-  #
 
 class supaidauen_ImagePadding:
   @classmethod
@@ -373,8 +372,8 @@ class supaidauen_ImagePadding:
           "width": ("INT", { "default": 512, "min": 0, "max": MAX_RESOLUTION, "step": 1, }),
           "height": ("INT", { "default": 512, "min": 0, "max": MAX_RESOLUTION, "step": 1, }),
           },
-          "optional": {
-          }
+        "optional": {
+        }
         }
   RETURN_TYPES = ("IMAGE",)
   RETURN_NAMES = ("images",)
@@ -440,6 +439,7 @@ class supaidauen_ImagePadding:
     outputs = torch.clamp(outputs, 0, 1)
 
     return(outputs, outputs.shape[2], outputs.shape[1],)
+
 
 class supaidauen_Image_From_List:
   @classmethod
