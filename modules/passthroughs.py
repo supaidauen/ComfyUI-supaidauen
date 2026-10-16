@@ -34,7 +34,7 @@ class supaidauen_passthrough_IMAGE:
       "image": ('IMAGE',)
       },
       "optional":{
-      "prompt": ('STRING')
+      "prompt": ('STRING',)
       }
     }
   #

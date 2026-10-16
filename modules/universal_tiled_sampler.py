@@ -476,7 +476,6 @@ class UniversalTiledSamplerNode:
                 "positive":      ("CONDITIONING",),
                 "negative":      ("CONDITIONING",),
                 "vae":           ("VAE",),
-                "image":         ("IMAGE",),
                 "seed":          ("INT",    {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
                 "steps":         ("INT",    {"default": 20, "min": 1, "max": 200, "tooltip": "Sampling steps per tile."}),
                 "cfg":           ("FLOAT",  {"default": 7.0, "min": 0.0, "max": 30.0, "step": 0.1, "tooltip": "Classifier-free guidance scale."}),
@@ -499,6 +498,8 @@ class UniversalTiledSamplerNode:
             },
             "optional": {
                 "upscale_model": ("UPSCALE_MODEL",),
+                "image":         ("IMAGE", {"tooltip": "Provide either image or latent, not both. If both are given, image takes precedence."}),
+                "latent":        ("LATENT", {"tooltip": "Alternative to image, for pipelines that never decode to pixel space (e.g. a DiT stage that only emits LATENT). Decoded once via vae.decode() at the start; everything downstream -- pixel-space upscale, tile geometry, blend masks, color matching, per-tile re-encode -- is otherwise unchanged, so this doesn't avoid the encode/decode round trip, it just adapts the input port."}),
             }
         }
 
@@ -507,12 +508,19 @@ class UniversalTiledSamplerNode:
     FUNCTION = "upscale"
     CATEGORY = "sampling/custom_sampling"
 
-    def upscale(self, model, positive, negative, vae, image,
+    def upscale(self, model, positive, negative, vae,
                 seed, steps, cfg, sampler_name, scheduler, denoise,
                 scale_factor, tiling_strategy, tile_size_mode, tile_width, tile_height, padding,
                 color_match, mask_blur, adaptive_tiling, core_anchor,
                 consistent_noise=True, skip_threshold=0.0, upscale_model=None,
-                color_match_mode="lab"):
+                color_match_mode="lab", image=None, latent=None):
+
+        if image is None and latent is None:
+            raise ValueError("[UTS] Provide either `image` or `latent`.")
+        if image is None:
+            log.info("[UTS] No image provided; decoding the supplied latent once to seed the "
+                      "pixel-space tiling/upscale pipeline.")
+            image = vae.decode(latent["samples"])
 
         if upscale_model is not None:
             import comfy_extras.nodes_upscale_model as upscale_nodes
