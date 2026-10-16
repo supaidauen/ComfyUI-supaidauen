@@ -1,6 +1,8 @@
 from pathlib import Path
 from comfy_extras.nodes_mask import ImageCompositeMasked
 
+import os
+
 import folder_paths
 import nodes
 
@@ -15,6 +17,31 @@ import torch.nn.functional as F
 from PIL import Image, ImageOps
 Image.MAX_IMAGE_PIXELS = None
 MAX_RESOLUTION = nodes.MAX_RESOLUTION
+
+def resolve_output_subpath(sub_path: str) -> str:
+    """
+    Safely resolves a free-text string input into an absolute path 
+    rooted in the ComfyUI output directory, preventing traversal errors.
+    """
+    if not sub_path:
+        raise ValueError("Path input string cannot be empty.")
+
+    # 1. Get the official absolute output directory path
+    output_dir = os.path.abspath(folder_paths.get_output_directory())
+    
+    # 2. Normalize the user input to strip out dangerous leading slashes or explicit relative steps
+    # os.path.normpath resolves things like 'a/../b' to just 'b'
+    clean_sub_path = os.path.normpath(sub_path).lstrip(os.sep).lstrip(".")
+    clean_sub_path = clean_sub_path.replace("output/",'')
+    
+    # 3. Securely bind it to the output directory footprint
+    absolute_target_path = os.path.abspath(os.path.join(output_dir, clean_sub_path))
+    
+    # 4. Strict safety anchor check
+    if not absolute_target_path.startswith(output_dir):
+        raise ValueError(f"Security Access Denied: Path escapes the output directory boundary.")
+        
+    return absolute_target_path
 
 class supaidauen_Image_Compositor:
   MAX = 3
@@ -309,11 +336,7 @@ class supaidauen_Character_IO:
   def load_image(self, name, path, suffix, wildcard, seed, width, height, rescale, crop_to_size,target_key):
     image = self._get_filename(name, path, suffix, wildcard)
     #
-    if not self._resolve_path(image):
-        return "Invalid image path: {}".format(image_path)
-    if isinstance(image, list):
-      image = image[0]
-    image_path = folder_paths.get_annotated_filepath(image)
+    image_path = resolve_output_subpath(image)
     #
     with Image.open(image_path) as i:
       info_dict = i.info
@@ -324,7 +347,7 @@ class supaidauen_Character_IO:
       else:
         target_value = str(info_dict.get(target_key, f"Key '{target_key}' not found.")).strip("'\"")
       i = ImageOps.exif_transpose(i)
-
+      
       if crop_to_size:
         default_width = i.size[0]
         default_height = i.size[1]
@@ -354,11 +377,7 @@ class supaidauen_Character_IO:
   def _get_filename(name, path, suffix, wildcard):
     filename = f"{path}{suffix}".replace(wildcard,name)
     return filename
-  #
-  @staticmethod
-  def _resolve_path(image) -> Path:
-      image_path = Path(folder_paths.get_annotated_filepath(image))
-      return image_path
+
 
 class supaidauen_ImagePadding:
   @classmethod
