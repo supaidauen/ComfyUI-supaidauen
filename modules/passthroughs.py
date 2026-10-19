@@ -39,7 +39,7 @@ class supaidauen_passthrough_IMAGE:
     }
   #
   @classmethod
-  def IS_CHANGED(s, image):
+  def IS_CHANGED(s, image, prompt):
     return True
   #
   @classmethod

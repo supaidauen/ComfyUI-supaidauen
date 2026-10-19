@@ -28,6 +28,11 @@ class RandomPromptText:
                     "max": 0xffffffffffffffff,
                     "control_after_generate": True,  # adds randomize/increment/fixed control in the UI
                 }),
+                "random": ("BOOLEAN", {
+                    "default": True,
+                    "label_off": "sequential (seed = position)",
+                    "label_on": "random (seeded)",
+                })
             }
         }
 
@@ -39,7 +44,7 @@ class RandomPromptText:
     # matches the innermost {...} group (no nested braces inside it)
     _PATTERN = re.compile(r"\{([^{}]*)\}")
 
-    def process(self, text, seed):
+    def process(self, text, seed, random):
         rng = random.Random(seed)
         result = text
 
@@ -49,7 +54,10 @@ class RandomPromptText:
                 break
             options = match.group(1).split("|")
             options = [o for o in options] or [""]
-            choice = rng.choice(options)
+            if random:
+                choice = rng.choice(options)
+            else:
+                choice = options[seed % len(options)]
             result = result[:match.start()] + choice + result[match.end():]
 
         return (result, seed)
