@@ -1,4 +1,4 @@
-import random
+import random as rndm
 import re
 
 class RandomPromptText:
@@ -45,7 +45,7 @@ class RandomPromptText:
     _PATTERN = re.compile(r"\{([^{}]*)\}")
 
     def process(self, text, seed, random):
-        rng = random.Random(seed)
+        rng = rndm.Random(seed)
         result = text
 
         while True:
